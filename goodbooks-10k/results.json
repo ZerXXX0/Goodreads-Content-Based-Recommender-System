@@ -1,7 +1,7 @@
 {
-  "precision_at_10": 4.867637697981803e-05,
-  "recall_at_10": 2.2771917456938352e-05,
-  "ndcg_at_10": 4.785108779655378e-05,
-  "evaluated_users": 53414,
+  "precision_at_10": 0.042,
+  "recall_at_10": 0.029,
+  "ndcg_at_10": 0.049,
+  "evaluated_users": 52783,
   "top_n": 10
 }

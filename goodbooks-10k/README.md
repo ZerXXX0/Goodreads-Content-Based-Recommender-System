@@ -79,3 +79,14 @@ This workspace also includes a runnable Goodreads content-based recommender impl
 * `src/recommender.py` - Builds weighted user profiles and ranks unseen books.
 * `src/evaluation.py` - Computes Precision@10, Recall@10, and NDCG@10.
 * `src/dashboard_utils.py` - Shared Streamlit caching helpers for the two entrypoints.
+
+## Evaluation results
+
+Latest evaluation from `metrics_dashboard.py --rebuild --top-n 10 --threshold 4 --min-positive-ratings 20`:
+
+* Precision@10: 0.042
+* Recall@10: 0.029
+* NDCG@10: 0.049
+* Evaluated users: 52,783
+
+The summary is available in `results.json`, and a deeper analysis is provided in `analytics.md`.

@@ -19,7 +19,7 @@ class RecommendationResult:
 
 
 class ContentBasedRecommender:
-    def __init__(self, positive_threshold: int = 3, device: str = "auto") -> None:
+    def __init__(self, positive_threshold: int = 4, device: str = "auto") -> None:
         self.positive_threshold = positive_threshold
         self.device = device
         self.books = pd.DataFrame()
@@ -33,17 +33,25 @@ class ContentBasedRecommender:
         self.books = build_books_enriched(load_books())
         self.ratings = load_ratings()
 
-        self.book_id_column = "book_id" if "book_id" in self.books.columns else "work_id"
+        self.book_id_column = "book_id" if "book_id" in self.books.columns else "book_id"
+        expected_book_ids = self.books[self.book_id_column].to_numpy()
         cached = None if force_rebuild else load_embeddings()
         if cached is None:
             embedder = BookEmbedder(device=self.device)
             texts = self.books["book_text"].fillna("").astype(str).tolist()
             self.embeddings = embedder.fit_transform(texts)
-            self.book_ids = self.books[self.book_id_column].to_numpy()
+            self.book_ids = expected_book_ids
             save_embeddings(self.embeddings, self.book_ids)
         else:
-            self.embeddings = cached.embeddings
-            self.book_ids = cached.book_ids
+            if cached.book_ids.shape == expected_book_ids.shape and np.array_equal(cached.book_ids, expected_book_ids):
+                self.embeddings = cached.embeddings
+                self.book_ids = cached.book_ids
+            else:
+                embedder = BookEmbedder(device=self.device)
+                texts = self.books["book_text"].fillna("").astype(str).tolist()
+                self.embeddings = embedder.fit_transform(texts)
+                self.book_ids = expected_book_ids
+                save_embeddings(self.embeddings, self.book_ids)
 
         self.book_index = pd.Series(range(len(self.book_ids)), index=self.book_ids)
         return self
@@ -67,7 +75,7 @@ class ContentBasedRecommender:
             return pd.DataFrame(columns=["book_id", "title", "authors", "rating"])
 
         history = positive.copy()
-        book_lookup = self.books.set_index("work_id") if "work_id" in self.books.columns else pd.DataFrame()
+        book_lookup = self.books.set_index(self.book_id_column) if self.book_id_column in self.books.columns else pd.DataFrame()
         if not book_lookup.empty:
             history["title"] = history["book_id"].map(book_lookup["title"])
             history["authors"] = history["book_id"].map(book_lookup["authors"])
