@@ -17,4 +17,4 @@ def ensure_models_dir() -> Path:
 
 
 def default_data_path(filename: str) -> Path:
-    return project_path(filename)
+    return project_path("goodbooks-10k", filename)
