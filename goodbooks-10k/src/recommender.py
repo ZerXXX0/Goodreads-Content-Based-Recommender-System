@@ -27,17 +27,19 @@ class ContentBasedRecommender:
         self.embeddings = np.empty((0, 0), dtype=np.float32)
         self.book_ids = np.array([], dtype=int)
         self.book_index = pd.Series(dtype=int)
+        self.book_id_column = "book_id"
 
     def fit(self, force_rebuild: bool = False) -> "ContentBasedRecommender":
         self.books = build_books_enriched(load_books())
         self.ratings = load_ratings()
 
+        self.book_id_column = "book_id" if "book_id" in self.books.columns else "work_id"
         cached = None if force_rebuild else load_embeddings()
         if cached is None:
             embedder = BookEmbedder(device=self.device)
             texts = self.books["book_text"].fillna("").astype(str).tolist()
             self.embeddings = embedder.fit_transform(texts)
-            self.book_ids = self.books["work_id"].to_numpy()
+            self.book_ids = self.books[self.book_id_column].to_numpy()
             save_embeddings(self.embeddings, self.book_ids)
         else:
             self.embeddings = cached.embeddings
@@ -47,9 +49,9 @@ class ContentBasedRecommender:
         return self
 
     def _get_book_row(self, book_id: int) -> pd.Series | None:
-        if "work_id" not in self.books.columns:
+        if self.book_id_column not in self.books.columns:
             return None
-        matches = self.books.loc[self.books["work_id"] == book_id]
+        matches = self.books.loc[self.books[self.book_id_column] == book_id]
         if matches.empty:
             return None
         return matches.iloc[0]
