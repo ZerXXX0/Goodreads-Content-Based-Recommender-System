@@ -6,42 +6,28 @@ A content-based recommender system for the Goodreads dataset using Sentence-BERT
 
 ## 📁 Repository Structure
 
-The project has been restructured to separate the python application code from the raw dataset:
-
-```
+```text
 Goodreads-Content-Based-Recommender-System/
-├── .gitignore               # Excludes virtualenvs, cache, and IDE configs
-├── .gitattributes           # Git attributes configuration
-├── README.md                # This project documentation
-├── app.py                   # Streamlit web interface
-├── metrics_dashboard.py     # Evaluation and metrics CLI
-├── requirements.txt         # Project dependencies
-├── results.json             # Cached latest evaluation results
-├── analytics.md             # In-depth analysis of recommendations
-├── models/                  # Precomputed embeddings and book IDs
+├── .gitignore
+├── .gitattributes
+├── README.md
+├── app.py
+├── metrics_dashboard.py
+├── requirements.txt
+├── results.json
+├── analytics.md
+├── models/
 │   ├── book_ids.npy
 │   └── embeddings.npy
-├── src/                     # Source code module
+├── src/
 │   ├── __init__.py
-│   ├── dashboard_utils.py   # Shared Streamlit caching helpers
-│   ├── embeddings.py        # Generates/caches embeddings (SBERT / TF-IDF)
-│   ├── evaluation.py        # Recommender evaluation metrics (Precision@10, NDCG, etc.)
-│   ├── preprocessing.py     # Data loaders and text enrichment
-│   ├── recommender.py       # Profile building and ranking logic
-│   └── utils.py             # Project-wide path and file utilities
-└── goodbooks-10k/           # Raw Dataset Directory
-    ├── books.csv            # Book metadata
-    ├── book_tags.csv        # Tags assigned by users to books (IDs)
-    ├── tags.csv             # Map tag IDs to names
-    ├── ratings.csv          # User ratings
-    ├── to_read.csv          # Books marked "to read" by users
-    ├── quick_look.ipynb     # Jupyter notebook for data exploration
-    ├── README.md            # Original dataset documentation
-    ├── THANKS.md            # Dataset credits
-    ├── LICENSE              # Dataset license
-    ├── books_xml/           # Raw XML source files
-    ├── samples/             # Small CSV snippets for quick testing
-    └── contrib/             # Community notebooks/scripts
+│   ├── dashboard_utils.py
+│   ├── embeddings.py
+│   ├── evaluation.py
+│   ├── preprocessing.py
+│   ├── recommender.py
+│   └── utils.py
+└── goodbooks-10k/
 ```
 
 ---
@@ -50,29 +36,30 @@ Goodreads-Content-Based-Recommender-System/
 
 ### 1. Installation
 
-Install all required Python packages:
-
 ```bash
 pip install -r requirements.txt
 ```
 
 ### 2. Run the Streamlit Web Application
 
-The interactive web dashboard lets you enter a User ID to view their reading history and top-10 recommended books:
-
 ```bash
 streamlit run app.py
 ```
 
-### 3. Run the Evaluation Dashboard
+The application allows users to:
 
-To evaluate recommender performance (Precision@10, Recall@10, and NDCG@10) across active users:
+* Enter a Goodreads User ID.
+* View books positively rated by the user.
+* Receive Top-10 personalized recommendations.
+* Inspect similarity scores for each recommendation.
+
+### 3. Run the Evaluation Dashboard
 
 ```bash
 python metrics_dashboard.py --top-n 10 --threshold 4 --min-positive-ratings 20
 ```
 
-To rebuild the precomputed Sentence-BERT embeddings from scratch, add the `--rebuild` flag:
+Rebuild embeddings:
 
 ```bash
 python metrics_dashboard.py --rebuild --top-n 10 --threshold 4 --min-positive-ratings 20
@@ -80,13 +67,119 @@ python metrics_dashboard.py --rebuild --top-n 10 --threshold 4 --min-positive-ra
 
 ---
 
+## 🧠 Methodology
+
+### Content Enrichment
+
+Each book is represented by:
+
+* Title
+* Author(s)
+* Top user-generated tags
+
+These attributes are merged into a single textual representation.
+
+### Embedding Generation
+
+The system uses:
+
+* Sentence-BERT (`all-MiniLM-L6-v2`)
+* TF-IDF fallback when SBERT is unavailable
+
+Embeddings are normalized and cached.
+
+### User Profiling
+
+User preferences are modeled using a weighted average of positively rated books:
+
+* Rating 5 contributes more than Rating 4.
+* Profile vectors are L2-normalized.
+
+### Recommendation Generation
+
+Recommendations are produced by:
+
+1. Building a user profile vector.
+2. Computing cosine similarity against all unseen books.
+3. Ranking books by similarity score.
+4. Returning the Top-N results.
+
+---
+
 ## 📊 Latest Evaluation Results
 
-Latest evaluation metrics saved in `results.json`:
+Latest results from `results.json`:
 
-* **Precision@10:** 0.042
-* **Recall@10:** 0.029
-* **NDCG@10:** 0.049
-* **Evaluated Users:** 52,783
+| Metric          |  Score |
+| --------------- | -----: |
+| Precision@10    | 0.0765 |
+| Recall@10       | 0.0518 |
+| NDCG@10         | 0.0825 |
+| Evaluated Users | 52,783 |
 
-For a deep-dive analysis, check out [analytics.md](analytics.md).
+### Interpretation
+
+* Approximately 7.65% of recommended books are relevant.
+* The system retrieves 5.18% of all relevant future interactions.
+* Relevant books tend to appear near the top of the recommendation list.
+
+### Improvement over Previous Version
+
+| Metric       | Previous | Current | Improvement |
+| ------------ | -------: | ------: | ----------: |
+| Precision@10 |   0.0420 |  0.0765 |      +82.1% |
+| Recall@10    |   0.0290 |  0.0518 |      +78.6% |
+| NDCG@10      |   0.0490 |  0.0825 |      +68.4% |
+
+---
+
+## 📈 Performance Analysis
+
+Given a catalog of approximately 10,000 books, recommending only 10 books per user is a highly challenging retrieval task.
+
+Random recommendation would achieve approximately:
+
+```text
+0.1%
+```
+
+while the model achieves:
+
+```text
+7.65%
+```
+
+making it roughly:
+
+```text
+76× better than random selection
+```
+
+under the same evaluation conditions.
+
+---
+
+## 🔮 Future Improvements
+
+* Hybrid Content-Based + Collaborative Filtering
+* Book Synopsis Integration
+* Advanced Embedding Models (MPNet, E5, BGE)
+* Learning-to-Rank Re-ranking
+* Implicit Feedback Integration
+* User Preference Adaptation
+
+---
+
+## 📄 Documentation
+
+For detailed implementation details and evaluation analysis:
+
+* `analytics.md`
+* `src/evaluation.py`
+* `src/recommender.py`
+
+---
+
+## 📜 License
+
+This project uses the Goodreads Goodbooks-10k dataset and follows the original dataset licensing terms.
