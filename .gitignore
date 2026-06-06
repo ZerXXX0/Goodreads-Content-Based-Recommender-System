@@ -153,3 +153,5 @@ cython_debug/
 
 # Project specific
 books_enriched.csv
+
+models/embeddings.npy

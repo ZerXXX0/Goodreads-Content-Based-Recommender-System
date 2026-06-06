@@ -18,7 +18,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--threshold", type=int, default=4, help="Rating threshold considered as positive feedback.")
     parser.add_argument("--min-positive-ratings", type=int, default=20, help="Minimum positive ratings required to include a user in evaluation.")
     parser.add_argument("--debug-user", type=int, default=None, help="Optional user_id to inspect training, held-out, and recommended books.")
-    parser.add_argument("--output", type=Path, default=None, help="Optional JSON file to write the evaluation summary.")
+    parser.add_argument("--output", type=Path, default="Output.json", help="Optional JSON file to write the evaluation summary.")
     return parser.parse_args()
 
 
